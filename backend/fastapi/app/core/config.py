@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: str = "5432"
     DB_NAME: str = "rdv_db"
-    DB_USER: str = "masterpiece"
-    DB_PASSWORD: str = "zntPEGASUS77K"
+    DB_USER: Optional[str] = None
+    DB_PASSWORD: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 

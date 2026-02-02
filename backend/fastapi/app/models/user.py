@@ -1,9 +1,7 @@
-from sqlalchemy import Column, String, DateTime, TEXT, text
+from sqlalchemy import Column, String, DateTime, text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
+from app.db.base_class import Base
 import datetime
-
-Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
@@ -18,3 +16,4 @@ class User(Base):
     role = Column(String(20), nullable=False, default="USER")
     created_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), onupdate=datetime.datetime.now)
+
