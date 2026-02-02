@@ -3,8 +3,8 @@ spring:
     name: rdv-backend
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:rdv_db}?currentSchema=rdv
-    username: ${DB_USER:masterpiece}
-    password: ${DB_PASSWORD:zntPEGASUS77K}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
