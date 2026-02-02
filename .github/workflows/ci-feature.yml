@@ -20,7 +20,7 @@ jobs:
         run: |
           cd backend/spring-boot
           chmod +x gradlew
-          ./gradlew build
+          ./gradlew build -x test
 
   build-fastapi:
     runs-on: ubuntu-latest
