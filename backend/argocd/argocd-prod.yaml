@@ -1,20 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rdv-app
+  name: rdv-app-prod
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/M4STERPIECE77K/MED-MANAGE.git
-    targetRevision: HEAD
+    targetRevision: main
     path: backend/k8s
   destination:
     server: https://kubernetes.default.svc
-    namespace: rdv
+    namespace: rdv-prod
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-    - CreateNamespace=true
+      - CreateNamespace=true
