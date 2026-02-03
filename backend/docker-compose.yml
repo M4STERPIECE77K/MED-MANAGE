@@ -7,12 +7,20 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./scripts/sql:/docker-entrypoint-initdb.d
+      - ./scripts/sql:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U masterpiece -d rdv_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
 
   fastapi-backend:
     build:
@@ -26,7 +34,22 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - backend-net
+      - frontend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
+
+volumes:
+  pgdata:
 
 networks:
-  default:
-    name: rdv-network
+  backend-net:
+    driver: bridge
+    internal: true
+  frontend-net:
+    driver: bridge
+    name: rdv-frontend-net
