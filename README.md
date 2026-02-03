@@ -93,6 +93,9 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 # Check all pods in the project
 kubectl get pods -n rdv
 
+# Check ArgoCD pods in real-time
+kubectl get pods -n argocd -w
+
 # Check deployment rollout
 kubectl rollout status deployment/rdv-db -n rdv
 ```
