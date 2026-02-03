@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rdv-db
-  namespace: rdv
 spec:
   replicas: 1
   selector:
@@ -14,42 +13,41 @@ spec:
         app: rdv-db
     spec:
       containers:
-      - name: postgres
-        image: postgres:15-alpine
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        env:
-        - name: POSTGRES_DB
-          valueFrom:
-            secretKeyRef:
-              name: rdv-secrets
-              key: db-name
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: rdv-secrets
-              key: db-user
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: rdv-secrets
-              key: db-password
-        ports:
-        - containerPort: 5432
-        # Note: In real K8s, we'd use a PVC for persistence
+        - name: postgres
+          image: postgres:15-alpine
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: rdv-secrets
+                  key: db-name
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rdv-secrets
+                  key: db-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rdv-secrets
+                  key: db-password
+          ports:
+            - containerPort: 5432
+          # Note: In real K8s, we'd use a PVC for persistence
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: rdv-db
-  namespace: rdv
 spec:
   ports:
-  - port: 5432
+    - port: 5432
   selector:
     app: rdv-db
