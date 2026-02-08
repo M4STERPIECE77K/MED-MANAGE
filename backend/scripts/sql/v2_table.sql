@@ -1,6 +1,8 @@
 -- v2_table.sql
 SET search_path TO rdv;
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name VARCHAR(100) NOT NULL,

@@ -15,6 +15,7 @@ spec:
       containers:
         - name: fastapi-app
           image: rdv-fastapi-backend:latest
+          imagePullPolicy: IfNotPresent
           resources:
             requests:
               memory: "128Mi"

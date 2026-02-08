@@ -16,39 +16,85 @@ The infrastructure is built on **Kubernetes** and managed via **ArgoCD** for con
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Local PC, Windows/PowerShell)
 
 ### 1. Prerequisites
-- A running Kubernetes cluster (Kind, Minikube, or Cloud provider).
-- `kubectl` CLI installed.
-- `base64` and `sed` utilities.
+- Docker Desktop installed and running.
+- `kubectl` already available.
 
-### 2. Namespace Creation
-Create the dedicated namespace for the application:
-```bash
-kubectl apply -f backend/k8s/namespace.yaml
+### 2. Install Helm, kind, and Argo CD CLI (local user bin)
+```powershell
+$bin = "$env:USERPROFILE\bin"
+New-Item -ItemType Directory -Force $bin | Out-Null
+
+# Helm
+Invoke-WebRequest -Uri "https://get.helm.sh/helm-v3.16.2-windows-amd64.zip" -OutFile "$env:TEMP\helm.zip"
+Expand-Archive -Force "$env:TEMP\helm.zip" "$env:TEMP\helm"
+Move-Item "$env:TEMP\helm\windows-amd64\helm.exe" "$bin\helm.exe" -Force
+
+# kind
+Invoke-WebRequest -Uri "https://kind.sigs.k8s.io/dl/v0.24.0/kind-windows-amd64" -OutFile "$bin\kind.exe"
+
+# Argo CD CLI
+Invoke-WebRequest -Uri "https://github.com/argoproj/argo-cd/releases/download/v2.12.6/argocd-windows-amd64.exe" -OutFile "$bin\argocd.exe"
+
+# Add user bin to PATH
+$env:Path = "$bin;$env:Path"
+$userPath = [Environment]::GetEnvironmentVariable("Path","User")
+if (-not $userPath) { $userPath = "" }
+if ($userPath -notlike "*$bin*") { [Environment]::SetEnvironmentVariable("Path", "$bin;$userPath", "User") }
 ```
 
-### 3. Secrets Configuration
-The application uses a secret named `rdv-secrets` injected from the `backend/.env` file. To create it with the correct values:
-
-```bash
-kubectl create secret generic rdv-secrets -n rdv \
-  --from-literal=db-name=$(grep DB_NAME backend/.env | cut -d'=' -f2) \
-  --from-literal=db-user=$(grep DB_USER backend/.env | cut -d'=' -f2) \
-  --from-literal=db-password=$(grep DB_PASSWORD backend/.env | cut -d'=' -f2)
+### 3. Create a local cluster (kind)
+```powershell
+$env:Path = "$env:USERPROFILE\bin;$env:Path"
+kind create cluster --name rdv-cluster
 ```
 
-### 4. Deploying Infrastructure
-Apply the manifests in the following order:
+### 4. Install Argo CD
+```powershell
+kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side --force-conflicts
+```
 
-```bash
-# Database
+### 5. Build images locally (from repo root)
+```powershell
+docker build -t rdv-fastapi-backend:latest "D:\FREELANCE\inventory-management\MED-MANAGE\backend\fastapi"
+docker build -t rdv-spring-backend:latest "D:\FREELANCE\inventory-management\MED-MANAGE\backend\spring-boot"
+```
+
+### 6. Load images into kind
+```powershell
+$env:Path = "$env:USERPROFILE\bin;$env:Path"
+kind load docker-image rdv-fastapi-backend:latest --name rdv-cluster
+kind load docker-image rdv-spring-backend:latest --name rdv-cluster
+```
+
+### 7. Create secrets and deploy the stack
+```powershell
+kubectl create secret generic rdv-secrets \
+  --from-literal=db-user=masterpiece \
+  --from-literal=db-password=rdv_password \
+  --from-literal=db-name=rdv_db \
+  --dry-run=client -o yaml | kubectl apply -f -
+
 kubectl apply -f backend/k8s/postgres.yaml
-
-# Backend Services
 kubectl apply -f backend/k8s/fastapi.yaml
 kubectl apply -f backend/k8s/spring-boot.yaml
+```
+
+### 8. Wait for pods to be ready
+```powershell
+kubectl rollout status deployment/rdv-db --timeout=300s
+kubectl rollout status deployment/rdv-fastapi-backend --timeout=300s
+kubectl rollout status deployment/rdv-spring-backend --timeout=300s
+```
+
+### 9. Access services (local port-forward)
+```powershell
+kubectl port-forward svc/argocd-server -n argocd 8081:443
+kubectl port-forward svc/rdv-fastapi-backend 8000:8000
+kubectl port-forward svc/rdv-spring-backend 8080:8080
 ```
 
 ---
@@ -56,23 +102,24 @@ kubectl apply -f backend/k8s/spring-boot.yaml
 ## 🐙 ArgoCD Setup (GitOps)
 
 ### 1. Installation
-Install ArgoCD using the server-side apply to avoid annotation size limits:
-```bash
+Install ArgoCD using server-side apply to avoid annotation size limits:
+```powershell
 kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side --force-conflicts
 ```
 
 ### 2. Accessing the UI
 - **Port Forwarding**:
-  ```bash
-  kubectl port-forward svc/argocd-server -n argocd 8443:443
+  ```powershell
+  kubectl port-forward svc/argocd-server -n argocd 8081:443
   ```
 - **Login Credentials**:
-  - **URL**: `https://localhost:8443`
+  - **URL**: `https://localhost:8081`
   - **Username**: `admin`
   - **Password**: Retrieve it using:
-    ```bash
-    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+    ```powershell
+    $pwd = kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}";
+    [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($pwd))
     ```
 
 ---
@@ -89,7 +136,7 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 | ArgoCD CRD invalid (too long) | Always use `--server-side` flag when applying ArgoCD manifests. |
 
 ### Monitoring Status
-```bash
+```powershell
 # Check all pods in the project
 kubectl get pods -n rdv
 
