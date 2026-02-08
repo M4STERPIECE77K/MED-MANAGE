@@ -13,5 +13,5 @@ resources:
 configMapGenerator:
   - name: rdv-db-init
     files:
-      - ../scripts/sql/v1_schema.sql
-      - ../scripts/sql/v2_table.sql
+      - sql/v1_schema.sql
+      - sql/v2_table.sql
