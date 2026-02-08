@@ -15,6 +15,7 @@ spec:
       containers:
         - name: spring-app
           image: rdv-spring-backend:latest
+          imagePullPolicy: IfNotPresent
           resources:
             requests:
               memory: "512Mi"
