@@ -6,7 +6,7 @@ export interface Appointment {
     service: string;
     date: string;
     time: string;
-    status: 'Confirmé' | 'En attente' | 'Annulé';
+    status: 'Confirmé' | 'En attente' | 'Annulé' | 'Terminé';
     notes?: string;
 }
 

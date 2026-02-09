@@ -1,4 +1,5 @@
-import { Box, Table } from '@chakra-ui/react';
+import { Box, Table, Icon } from '@chakra-ui/react';
+import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { DataTable } from '../components/dashboard/DataTable';
 import { Badge } from '../components/common/Badge';
 import { services } from '../data/sampleData';
@@ -49,7 +50,7 @@ export const ServicesPage = () => {
                                         _hover={{ bg: 'var(--bg-light)' }}
                                         title="Modifier"
                                     >
-                                        ✏️
+                                        <Icon as={FiEdit2} boxSize="1.1rem" />
                                     </Box>
                                     <Box
                                         as="button"
@@ -64,7 +65,7 @@ export const ServicesPage = () => {
                                         _hover={{ bg: 'var(--bg-light)' }}
                                         title="Supprimer"
                                     >
-                                        🗑️
+                                        <Icon as={FiTrash2} boxSize="1.1rem" />
                                     </Box>
                                 </Box>
                             </Table.Cell>

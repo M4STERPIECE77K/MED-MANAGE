@@ -1,7 +1,7 @@
 name: CI Feature
 
 on:
-  pull_request:
+  push:
     branches:
       - feature/**
       - bugfix/**
