@@ -1,7 +1,7 @@
 import { Box } from '@chakra-ui/react';
 
 interface BadgeProps {
-    status: 'Confirmé' | 'En attente' | 'Annulé' | 'Actif' | 'Inactif';
+    status: 'Confirmé' | 'En attente' | 'Annulé' | 'Actif' | 'Inactif' | 'Terminé';
     children: React.ReactNode;
 }
 
@@ -13,6 +13,11 @@ export const Badge = ({ status, children }: BadgeProps) => {
                 return {
                     bg: 'rgba(16, 185, 129, 0.1)',
                     color: 'var(--success)',
+                };
+            case 'Terminé':
+                return {
+                    bg: 'rgba(5, 199, 226, 0.1)',
+                    color: 'var(--accent)',
                 };
             case 'En attente':
                 return {

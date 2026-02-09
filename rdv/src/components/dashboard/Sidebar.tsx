@@ -1,19 +1,28 @@
-import { Box, Flex, Text } from '@chakra-ui/react';
+import { Box, Flex, Text, Icon } from '@chakra-ui/react';
 import { Link, useLocation } from 'react-router-dom';
+import type { IconType } from 'react-icons';
+import {
+    FiBarChart2,
+    FiCalendar,
+    FiUsers,
+    FiGrid,
+    FiClipboard,
+    FiSettings,
+} from 'react-icons/fi';
 
 interface NavItem {
     path: string;
-    icon: string;
+    icon: IconType;
     label: string;
 }
 
 const navItems: NavItem[] = [
-    { path: '/dashboard', icon: '📊', label: "Vue d'ensemble" },
-    { path: '/dashboard/appointments', icon: '📅', label: 'Rendez-vous' },
-    { path: '/dashboard/patients', icon: '👥', label: 'Patients' },
-    { path: '/dashboard/calendar', icon: '🗓️', label: 'Calendrier' },
-    { path: '/dashboard/services', icon: '⚕️', label: 'Services' },
-    { path: '/dashboard/settings', icon: '⚙️', label: 'Paramètres' },
+    { path: '/dashboard', icon: FiBarChart2, label: "Vue d'ensemble" },
+    { path: '/dashboard/appointments', icon: FiClipboard, label: 'Rendez-vous' },
+    { path: '/dashboard/patients', icon: FiUsers, label: 'Patients' },
+    { path: '/dashboard/calendar', icon: FiCalendar, label: 'Calendrier' },
+    { path: '/dashboard/services', icon: FiGrid, label: 'Services' },
+    { path: '/dashboard/settings', icon: FiSettings, label: 'Paramètres' },
 ];
 
 interface SidebarProps {
@@ -56,7 +65,7 @@ export const Sidebar = ({ isOpen = true }: SidebarProps) => {
                     >
                         🦷
                     </Flex>
-                    DentiCare Admin
+                    DentiCare
                 </Flex>
             </Box>
 
@@ -90,7 +99,7 @@ export const Sidebar = ({ isOpen = true }: SidebarProps) => {
                                         e.currentTarget.style.borderLeftColor = isActive ? 'var(--accent)' : 'transparent';
                                     }}
                                 >
-                                    <Text fontSize="1.3rem">{item.icon}</Text>
+                                    <Icon as={item.icon} boxSize="1.25rem" />
                                     <Text>{item.label}</Text>
                                 </Link>
                             </Box>
