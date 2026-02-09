@@ -1,6 +1,17 @@
 spring:
   application:
     name: rdv-backend
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME}?currentSchema=rdv
     username: ${DB_USER}
@@ -17,6 +28,17 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+
+app:
+  api:
+    version: v1
+  admin:
+    email: ${ADMIN_EMAIL}
+    password: ${ADMIN_PASSWORD}
+    reset-ttl-minutes: ${ADMIN_RESET_TTL_MINUTES:15}
+    reset-url: ${ADMIN_RESET_URL:http://localhost:5173/reset-password}
+  email:
+    from: ${SMTP_FROM:}
 
 logging:
   level:
