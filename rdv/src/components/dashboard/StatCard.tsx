@@ -1,9 +1,10 @@
 import { Box, Flex, Heading, Text } from '@chakra-ui/react';
+import type { ReactNode } from 'react';
 
 interface StatCardProps {
     title: string;
     value: string | number;
-    icon: string;
+    icon: ReactNode;
     change?: string;
     variant?: 'primary' | 'accent' | 'success' | 'warning';
 }

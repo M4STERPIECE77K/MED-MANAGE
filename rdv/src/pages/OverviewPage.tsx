@@ -1,5 +1,5 @@
 import { Box, Grid, Table, Flex, Heading, Text, Button, Icon } from '@chakra-ui/react';
-import { FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiCalendar, FiUsers, FiCheckCircle, FiClock } from 'react-icons/fi';
 import { StatCard } from '../components/dashboard/StatCard';
 import { Badge } from '../components/common/Badge';
 import { sampleAppointments } from '../data/sampleData';
@@ -20,7 +20,6 @@ export const OverviewPage = () => {
 
     return (
         <Box>
-            {/* Welcome Header */}
             <Box 
                 mb="2rem" 
                 p="1.5rem" 
@@ -46,8 +45,6 @@ export const OverviewPage = () => {
                     Voici un aperçu de votre activité aujourd'hui
                 </Text>
             </Box>
-
-            {/* Stats Grid */}
             <Grid
                 templateColumns="repeat(auto-fit, minmax(240px, 1fr))"
                 gap="1.25rem"
@@ -56,34 +53,32 @@ export const OverviewPage = () => {
                 <StatCard
                     title="Rendez-vous aujourd'hui"
                     value="12"
-                    icon="📅"
+                    icon={<Icon as={FiCalendar} />}
                     change="+3 depuis hier"
                     variant="primary"
                 />
                 <StatCard
                     title="Patients actifs"
                     value="342"
-                    icon="👥"
+                    icon={<Icon as={FiUsers} />}
                     change="+15 ce mois"
                     variant="accent"
                 />
                 <StatCard
                     title="Taux de présence"
                     value="94%"
-                    icon="✅"
+                    icon={<Icon as={FiCheckCircle} />}
                     change="+2% ce mois"
                     variant="success"
                 />
                 <StatCard
                     title="En attente"
                     value="8"
-                    icon="⏳"
+                    icon={<Icon as={FiClock} />}
                     change="Confirmations requises"
                     variant="warning"
                 />
             </Grid>
-
-            {/* Recent Appointments Table */}
             <Box
                 bg="white"
                 borderRadius="12px"
