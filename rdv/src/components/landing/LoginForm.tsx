@@ -1,15 +1,73 @@
 import { Box, Button, Heading, Input, Text, Flex, Link } from '@chakra-ui/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
 
 export const LoginForm = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [info, setInfo] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const navigate = useNavigate();
+    const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        alert('Connexion admin reussie.');
+        setError(null);
+        setInfo(null);
+        setIsSubmitting(true);
+
+        try {
+            const response = await fetch(`${apiBase}/api/v1/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.message || 'Identifiants invalides.');
+            }
+
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erreur de connexion.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        setError(null);
+        setInfo(null);
+
+        if (!email) {
+            setError('Veuillez saisir votre email.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${apiBase}/api/v1/auth/request-reset`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.message || 'Erreur lors de la demande.');
+            }
+
+            setInfo('Demande envoyee. Verifiez votre email.');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erreur de reinitialisation.');
+        }
     };
 
     return (
@@ -127,6 +185,10 @@ export const LoginForm = () => {
                 <Flex justify="flex-end" mb="1.5rem">
                     <Link
                         href="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleForgotPassword();
+                        }}
                         fontSize="0.9rem"
                         color="accent"
                         fontWeight="500"
@@ -138,6 +200,38 @@ export const LoginForm = () => {
                         Mot de passe oublié ?
                     </Link>
                 </Flex>
+
+                {error && (
+                    <Box
+                        mb="1rem"
+                        p="0.75rem"
+                        borderRadius="8px"
+                        bg="rgba(220, 38, 38, 0.08)"
+                        border="1px solid rgba(220, 38, 38, 0.2)"
+                        color="#dc2626"
+                        fontSize="0.9rem"
+                        fontWeight="600"
+                        textAlign="center"
+                    >
+                        {error}
+                    </Box>
+                )}
+
+                {info && (
+                    <Box
+                        mb="1rem"
+                        p="0.75rem"
+                        borderRadius="8px"
+                        bg="rgba(5, 199, 226, 0.08)"
+                        border="1px solid rgba(5, 199, 226, 0.2)"
+                        color="accent"
+                        fontSize="0.9rem"
+                        fontWeight="600"
+                        textAlign="center"
+                    >
+                        {info}
+                    </Box>
+                )}
 
 
                 <Flex justify="center">
@@ -159,8 +253,9 @@ export const LoginForm = () => {
                             transform: 'translateY(-2px)',
                             boxShadow: '0 4px 12px rgba(10, 77, 104, 0.3)',
                         }}
+                        disabled={isSubmitting}
                     >
-                        Se connecter
+                        {isSubmitting ? 'Connexion...' : 'Se connecter'}
                     </Button>
                 </Flex>
             </form>

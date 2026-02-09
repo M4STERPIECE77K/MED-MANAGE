@@ -9,6 +9,8 @@ public class BackendSpringApplication {
 
 	public static void main(String[] args) {
 		Dotenv dotenv = Dotenv.configure()
+				.directory("../")
+				.filename(".env")
 				.ignoreIfMissing()
 				.load();
 		dotenv.entries().forEach(entry -> {
