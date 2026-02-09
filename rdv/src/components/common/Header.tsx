@@ -82,7 +82,7 @@ export const Header = ({ onAdminClick }: HeaderProps) => {
                 </Flex>
 
                 <RouterLink
-                    to="/dashboard"
+                    to="/login"
                     onClick={onAdminClick}
                     style={{
                         background: 'var(--primary)',

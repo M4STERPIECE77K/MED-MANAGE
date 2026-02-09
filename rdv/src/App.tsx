@@ -8,12 +8,14 @@ import { PatientsPage } from './pages/PatientsPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { LoginPage } from './pages/LoginPage';
 
 function App() {
   return (
     <Box>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardLayout title="Vue d'ensemble" />}>
           <Route index element={<OverviewPage />} />
           <Route path="appointments" element={<AppointmentsPage />} />
