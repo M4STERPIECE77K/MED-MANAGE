@@ -20,8 +20,8 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
             h="100%"
             bg="rgba(0, 0, 0, 0.5)"
             zIndex="2000"
-            align="center"
-            justify="center"
+            alignItems="center"
+            justifyContent="center"
             p="1rem"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
@@ -34,7 +34,7 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
                 borderRadius="16px"
                 maxW="600px"
                 w="100%"
-                maxH="90vh"
+                maxH="90vh" 
                 overflowY="auto"
                 css={{
                     animation: 'slideUp 0.3s ease-out',
@@ -43,8 +43,8 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
                 <Flex
                     p="2rem"
                     borderBottom="2px solid var(--border)"
-                    justify="space-between"
-                    align="center"
+                    justifyContent="space-between"
+                    alignItems="center"
                 >
                     <Heading
                         as="h2"

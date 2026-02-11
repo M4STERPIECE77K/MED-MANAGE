@@ -1,10 +1,16 @@
-import { Box, Button, Flex, Grid, Heading, Text, Badge } from '@chakra-ui/react';
-import { useState } from 'react';
-import { sampleAppointments } from '../data/sampleData';
+import { Box, Button, Flex, Grid, Heading, Text, Badge, Spinner, Icon } from '@chakra-ui/react';
+import { useState, useEffect } from 'react';
+import type { Appointment } from '../types';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 export const CalendarPage = () => {
-    const [currentMonth, setCurrentMonth] = useState(0);
-    const [currentYear, setCurrentYear] = useState(2026);
+    const today = new Date();
+    const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+    const [currentYear, setCurrentYear] = useState(today.getFullYear());
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api/v1';
 
     const monthNames = [
         'Janvier',
@@ -23,6 +29,35 @@ export const CalendarPage = () => {
 
     const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
+    useEffect(() => {
+        fetchCalendarData();
+    }, [currentMonth, currentYear]);
+
+    const fetchCalendarData = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${apiBase}/appointments/calendar?year=${currentYear}&month=${currentMonth + 1}`);
+            if (!response.ok) throw new Error('Failed to fetch calendar data');
+            const data = await response.json();
+            
+            const mapped: Appointment[] = data.map((app: any) => ({
+                id: app.id || '',
+                patient: app.user ? `${app.user.firstName} ${app.user.lastName}` : 'Inconnu',
+                email: app.user ? app.user.email : '',
+                phone: app.user ? app.user.phone : '',
+                service: app.service ? app.service.name : 'Service inconnu',
+                date: app.appointmentDate ? app.appointmentDate.split('T')[0] : '',
+                status: app.status || 'En attente'
+            }));
+            
+            setAppointments(mapped);
+        } catch (error) {
+            console.error('Error fetching calendar data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const changeMonth = (delta: number) => {
         let newMonth = currentMonth + delta;
         let newYear = currentYear;
@@ -40,11 +75,11 @@ export const CalendarPage = () => {
     };
 
     const isToday = (day: number) => {
-        const today = new Date();
+        const d = new Date();
         return (
-            day === today.getDate() &&
-            currentMonth === today.getMonth() &&
-            currentYear === today.getFullYear()
+            day === d.getDate() &&
+            currentMonth === d.getMonth() &&
+            currentYear === d.getFullYear()
         );
     };
 
@@ -70,11 +105,13 @@ export const CalendarPage = () => {
                 </Box>
             );
         });
+
         for (let i = 0; i < firstDay; i++) {
             days.push(<Box key={`empty-${i}`} />);
         }
+
         for (let day = 1; day <= daysInMonth; day++) {
-            const hasAppointment = sampleAppointments.some((app) => {
+            const dayAppointments = appointments.filter((app) => {
                 const appDate = new Date(app.date);
                 return (
                     appDate.getDate() === day &&
@@ -83,15 +120,7 @@ export const CalendarPage = () => {
                 );
             });
 
-            const appointmentCount = sampleAppointments.filter((app) => {
-                const appDate = new Date(app.date);
-                return (
-                    appDate.getDate() === day &&
-                    appDate.getMonth() === currentMonth &&
-                    appDate.getFullYear() === currentYear
-                );
-            }).length;
-
+            const hasAppointment = dayAppointments.length > 0;
             const todayCheck = isToday(day);
 
             days.push(
@@ -136,6 +165,7 @@ export const CalendarPage = () => {
                             px="0.5rem"
                             py="0.15rem"
                             fontWeight="700"
+                            display={{ base: 'none', sm: 'block' }}
                         >
                             Aujourd'hui
                         </Badge>
@@ -164,7 +194,7 @@ export const CalendarPage = () => {
                                 color="accent"
                                 fontWeight="600"
                             >
-                                {appointmentCount} RDV
+                                {dayAppointments.length} RDV
                             </Text>
                         </Flex>
                     )}
@@ -183,6 +213,7 @@ export const CalendarPage = () => {
             boxShadow="0 4px 20px rgba(10, 77, 104, 0.08)"
             border="1px solid rgba(10, 77, 104, 0.08)"
             w="100%"
+            position="relative"
         >
             <Flex 
                 justify="space-between" 
@@ -213,56 +244,46 @@ export const CalendarPage = () => {
                 <Flex gap="0.4rem">
                     <Button
                         onClick={() => changeMonth(-1)}
-                        bg="white"
-                        color="primary"
-                        border="2px solid"
+                        variant="outline"
+                        size="sm"
                         borderColor="primary"
-                        px="0.75rem"
-                        py="0.35rem"
-                        borderRadius="8px"
-                        cursor="pointer"
-                        fontWeight="600"
-                        fontSize="0.8rem"
-                        transition="all 0.3s ease"
-                        _hover={{
-                            bg: 'primary',
-                            color: 'white',
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 12px rgba(10, 77, 104, 0.2)',
-                        }}
+                        color="primary"
+                        _hover={{ bg: 'primary', color: 'white' }}
                     >
-                        ← Précédent
+                        <Flex align="center" gap="0.4rem">
+                            <Icon as={FiChevronLeft} />
+                            <Text as="span">Précédent</Text>
+                        </Flex>
                     </Button>
                     <Button
                         onClick={() => changeMonth(1)}
+                        variant="solid"
+                        size="sm"
                         bg="primary"
                         color="white"
-                        border="2px solid transparent"
-                        px="0.75rem"
-                        py="0.35rem"
-                        borderRadius="8px"
-                        cursor="pointer"
-                        fontWeight="600"
-                        fontSize="0.8rem"
-                        transition="all 0.3s ease"
-                        _hover={{
-                            bg: 'rgba(10, 77, 104, 0.9)',
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 12px rgba(10, 77, 104, 0.3)',
-                        }}
+                        _hover={{ bg: 'primaryDark' }}
                     >
-                        Suivant →
+                        <Flex align="center" gap="0.4rem">
+                            <Text as="span">Suivant</Text>
+                            <Icon as={FiChevronRight} />
+                        </Flex>
                     </Button>
                 </Flex>
             </Flex>
 
-            <Grid 
-                templateColumns="repeat(7, 1fr)" 
-                gap="0.35rem"
-                position="relative"
-            >
-                {generateCalendar()}
-            </Grid>
+            {isLoading ? (
+                <Flex justify="center" align="center" py="5rem">
+                    <Spinner size="xl" color="accent" />
+                </Flex>
+            ) : (
+                <Grid 
+                    templateColumns="repeat(7, 1fr)" 
+                    gap="0.35rem"
+                    position="relative"
+                >
+                    {generateCalendar()}
+                </Grid>
+            )}
         </Box>
     );
 };
