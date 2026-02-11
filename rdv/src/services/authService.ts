@@ -47,7 +47,6 @@ class AuthService {
         try {
             const token = this.getToken();
             if (token) {
-                // Appel au backend pour invalider le token
                 await fetch(`${API_BASE_URL}/auth/logout`, {
                     method: 'POST',
                     headers: {
@@ -59,7 +58,6 @@ class AuthService {
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
-            // Toujours nettoyer le localStorage même si l'appel API échoue
             this.clearAuth();
         }
     }
@@ -89,6 +87,20 @@ class AuthService {
     isAuthenticated(): boolean {
         return !!this.getToken();
     }
-}
 
+    async requestPasswordReset(email: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/auth/request-reset`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.message || 'Erreur lors de la demande de réinitialisation.');
+        }
+    }
+}
 export const authService = new AuthService();

@@ -1,12 +1,12 @@
 export interface Appointment {
-    id: number;
+    id: string;
     patient: string;
     email: string;
     phone: string;
     service: string;
     date: string;
     time: string;
-    status: 'Confirmé' | 'En attente' | 'Annulé' | 'Terminé';
+    status: 'Confirmé' | 'En attente' | 'Annulé' | 'Terminé' | 'PENDING' | 'CONFIRMED' | 'COMPLETED';
     notes?: string;
 }
 
@@ -39,5 +39,4 @@ export interface BookingFormData {
     date: string;
     time: string;
     service: string;
-    notes?: string;
 }
