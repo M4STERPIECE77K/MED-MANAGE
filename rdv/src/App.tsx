@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box } from '@chakra-ui/react';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardLayout } from './pages/DashboardLayout';
 import { OverviewPage } from './pages/OverviewPage';
@@ -18,14 +19,19 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/dashboard" element={<DashboardLayout title="Vue d'ensemble" />}>
-          <Route index element={<OverviewPage />} />
-          <Route path="appointments" element={<AppointmentsPage />} />
-          <Route path="patients" element={<PatientsPage />} />
-          <Route path="calendar" element={<CalendarPage />} />
-          <Route path="services" element={<ServicesPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+        
+        {/* Routes Protégées */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardLayout title="Vue d'ensemble" />}>
+            <Route index element={<OverviewPage />} />
+            <Route path="appointments" element={<AppointmentsPage />} />
+            <Route path="patients" element={<PatientsPage />} />
+            <Route path="calendar" element={<CalendarPage />} />
+            <Route path="services" element={<ServicesPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
         </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Box>

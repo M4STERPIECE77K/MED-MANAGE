@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
+import { authService } from '../../services/authService';
 
 export const LoginForm = () => {
     const [email, setEmail] = useState('');
@@ -11,7 +12,6 @@ export const LoginForm = () => {
     const [info, setInfo] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
-    const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -20,22 +20,10 @@ export const LoginForm = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch(`${apiBase}/api/v1/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                throw new Error(data.message || 'Identifiants invalides.');
-            }
-
-            navigate('/dashboard');
+            await authService.login({ email, password });
+            navigate('/dashboard', { replace: true });
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erreur de connexion.');
+            setError(err instanceof Error ? err.message : 'Identifiants invalides.');
         } finally {
             setIsSubmitting(false);
         }
@@ -51,22 +39,10 @@ export const LoginForm = () => {
         }
 
         try {
-            const response = await fetch(`${apiBase}/api/v1/auth/request-reset`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                throw new Error(data.message || 'Erreur lors de la demande.');
-            }
-
-            setInfo('Demande envoyee. Verifiez votre email.');
+            await authService.requestPasswordReset(email);
+            setInfo('Demande envoyée. Vérifiez votre email.');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erreur de reinitialisation.');
+            setError(err instanceof Error ? err.message : 'Erreur de réinitialisation.');
         }
     };
 
