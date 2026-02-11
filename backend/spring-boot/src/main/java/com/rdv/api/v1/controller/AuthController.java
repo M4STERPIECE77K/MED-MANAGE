@@ -43,13 +43,8 @@ public class AuthController {
                     .body(new AdminResetResponse(false, "Email required.", null));
         }
 
-        try {
-            adminAuthService.requestReset(request.email());
-            return ResponseEntity.ok(new AdminResetResponse(true, "Reset email sent.", null));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new AdminResetResponse(false, "Admin not found.", null));
-        }
+        adminAuthService.requestReset(request.email());
+        return ResponseEntity.ok(new AdminResetResponse(true, "Reset email sent.", null));
     }
 
     @PostMapping("/reset-password")
@@ -59,12 +54,16 @@ public class AuthController {
                     .body(new AdminResetResponse(false, "Token and new password required.", null));
         }
 
-        try {
-            adminAuthService.resetPassword(request.token(), request.newPassword());
-            return ResponseEntity.ok(new AdminResetResponse(true, "Password updated.", null));
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new AdminResetResponse(false, ex.getMessage(), null));
+        adminAuthService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(new AdminResetResponse(true, "Password updated.", null));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(jakarta.servlet.http.HttpServletRequest request) {
+        jakarta.servlet.http.HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
         }
+        return ResponseEntity.ok().build();
     }
 }

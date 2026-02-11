@@ -193,7 +193,6 @@ export const LoginForm = () => {
                         color="accent"
                         fontWeight="500"
                         _hover={{
-                            textDecoration: 'underline',
                             color: 'primary',
                         }}
                     >

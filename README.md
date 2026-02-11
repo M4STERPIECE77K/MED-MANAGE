@@ -7,9 +7,10 @@ This document describes the Kubernetes-based infrastructure and GitOps workflow 
 The infrastructure is built on **Kubernetes** and managed via **ArgoCD** for continuous deployment.
 
 ### Components
+
 - **Namespace**: `rdv` (Application) & `argocd` (Management).
 - **Database**: PostgreSQL 15 (Alpine).
-- **Backend Services**: 
+- **Backend Services**:
   - FastAPI (Python)
   - Spring Boot (Java)
 - **Secrets Management**: Dynamic injection of `.env` variables into Kubernetes Secrets.
@@ -19,12 +20,14 @@ The infrastructure is built on **Kubernetes** and managed via **ArgoCD** for con
 ## 🚀 Getting Started (Local PC)
 
 ### 1. Prerequisites
+
 - Docker Desktop (Windows/macOS) or Docker Engine (Linux) installed and running.
 - `kubectl` already available.
 
 ### 2. Install Helm, kind, and Argo CD CLI
 
 #### Windows (PowerShell)
+
 ```powershell
 $bin = "$env:USERPROFILE\bin"
 New-Item -ItemType Directory -Force $bin | Out-Null
@@ -48,6 +51,7 @@ if ($userPath -notlike "*$bin*") { [Environment]::SetEnvironmentVariable("Path",
 ```
 
 #### Linux (bash)
+
 ```bash
 # Helm
 curl -fsSL -o /tmp/helm.tar.gz https://get.helm.sh/helm-v3.16.2-linux-amd64.tar.gz
@@ -66,12 +70,14 @@ sudo chmod +x /usr/local/bin/argocd
 ### 3. Create a local cluster (kind)
 
 #### Windows (PowerShell)
+
 ```powershell
 $env:Path = "$env:USERPROFILE\bin;$env:Path"
 kind create cluster --name rdv-cluster
 ```
 
 #### Linux (bash)
+
 ```bash
 kind create cluster --name rdv-cluster
 ```
@@ -79,12 +85,14 @@ kind create cluster --name rdv-cluster
 ### 4. Install Argo CD
 
 #### Windows (PowerShell)
+
 ```powershell
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side --force-conflicts
 ```
 
 #### Linux (bash)
+
 ```bash
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side --force-conflicts
@@ -93,12 +101,14 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 ### 5. Build images locally (from repo root)
 
 #### Windows (PowerShell)
+
 ```powershell
 docker build -t rdv-fastapi-backend:latest "D:\FREELANCE\inventory-management\MED-MANAGE\backend\fastapi"
 docker build -t rdv-spring-backend:latest "D:\FREELANCE\inventory-management\MED-MANAGE\backend\spring-boot"
 ```
 
 #### Linux (bash)
+
 ```bash
 docker build -t rdv-fastapi-backend:latest ./backend/fastapi
 docker build -t rdv-spring-backend:latest ./backend/spring-boot
@@ -107,6 +117,7 @@ docker build -t rdv-spring-backend:latest ./backend/spring-boot
 ### 6. Load images into kind
 
 #### Windows (PowerShell)
+
 ```powershell
 $env:Path = "$env:USERPROFILE\bin;$env:Path"
 kind load docker-image rdv-fastapi-backend:latest --name rdv-cluster
@@ -114,6 +125,7 @@ kind load docker-image rdv-spring-backend:latest --name rdv-cluster
 ```
 
 #### Linux (bash)
+
 ```bash
 kind load docker-image rdv-fastapi-backend:latest --name rdv-cluster
 kind load docker-image rdv-spring-backend:latest --name rdv-cluster
@@ -122,6 +134,7 @@ kind load docker-image rdv-spring-backend:latest --name rdv-cluster
 ### 7. Create secrets and deploy the stack
 
 #### Windows (PowerShell)
+
 ```powershell
 kubectl create secret generic rdv-secrets \
   --from-literal=db-user=masterpiece \
@@ -135,6 +148,7 @@ kubectl apply -f backend/k8s/spring-boot.yaml
 ```
 
 #### Linux (bash)
+
 ```bash
 kubectl create secret generic rdv-secrets \
   --from-literal=db-user=masterpiece \
@@ -150,6 +164,7 @@ kubectl apply -f backend/k8s/spring-boot.yaml
 ### 8. Wait for pods to be ready
 
 #### Windows (PowerShell)
+
 ```powershell
 kubectl rollout status deployment/rdv-db --timeout=300s
 kubectl rollout status deployment/rdv-fastapi-backend --timeout=300s
@@ -157,6 +172,7 @@ kubectl rollout status deployment/rdv-spring-backend --timeout=300s
 ```
 
 #### Linux (bash)
+
 ```bash
 kubectl rollout status deployment/rdv-db --timeout=300s
 kubectl rollout status deployment/rdv-fastapi-backend --timeout=300s
@@ -166,6 +182,7 @@ kubectl rollout status deployment/rdv-spring-backend --timeout=300s
 ### 9. Access services (local port-forward)
 
 #### Windows (PowerShell)
+
 ```powershell
 kubectl port-forward svc/argocd-server -n argocd 8081:443
 kubectl port-forward svc/rdv-fastapi-backend 8000:8000
@@ -173,6 +190,7 @@ kubectl port-forward svc/rdv-spring-backend 8080:8080
 ```
 
 #### Linux (bash)
+
 ```bash
 kubectl port-forward svc/argocd-server -n argocd 8081:443
 kubectl port-forward svc/rdv-fastapi-backend 8000:8000
@@ -184,13 +202,16 @@ kubectl port-forward svc/rdv-spring-backend 8080:8080
 ## 🐙 ArgoCD Setup (GitOps)
 
 ### 1. Installation
+
 Install ArgoCD using server-side apply to avoid annotation size limits:
+
 ```bash
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side --force-conflicts
 ```
 
 ### 2. Accessing the UI
+
 - **Port Forwarding**:
   ```bash
   kubectl port-forward svc/argocd-server -n argocd 8081:443
@@ -200,7 +221,7 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
   - **Username**: `admin`
   - **Password**: Retrieve it using:
     ```bash
-    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo    (mdp = dCkDaHWErLWRpJ8e )
     ```
 
 ---
@@ -209,14 +230,15 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| `path "...postgres.yml" does not exist` | Ensure you use `.yaml` extension (not `.yml`). |
-| `rdv-secrets` shows `DATA 0` | The secret was created empty. Delete it and use the `kubectl create secret` command above. |
-| Pods stuck in `Pending` | Check if your local cluster has enough resources or if the image pull is slow. |
-| ArgoCD CRD invalid (too long) | Always use `--server-side` flag when applying ArgoCD manifests. |
+| Issue                                   | Solution                                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `path "...postgres.yml" does not exist` | Ensure you use `.yaml` extension (not `.yml`).                                             |
+| `rdv-secrets` shows `DATA 0`            | The secret was created empty. Delete it and use the `kubectl create secret` command above. |
+| Pods stuck in `Pending`                 | Check if your local cluster has enough resources or if the image pull is slow.             |
+| ArgoCD CRD invalid (too long)           | Always use `--server-side` flag when applying ArgoCD manifests.                            |
 
 ### Monitoring Status
+
 ```bash
 # Check all pods in the project
 kubectl get pods -n rdv

@@ -27,7 +27,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(deps.get_db)):
         last_name=user_in.last_name,
         email=user_in.email,
         phone=user_in.phone,
-        password=user_in.password, # In a real app, hash this!
+        password=user_in.password,
         role=user_in.role
     )
     db.add(user)
