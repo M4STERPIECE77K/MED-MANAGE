@@ -1,5 +1,5 @@
-import { Box, Table, Icon, Grid, Flex, Heading, Text, Button, Input, Spinner } from '@chakra-ui/react';
-import { FiEdit2, FiTrash2, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
+import { Box, Table, Icon, Grid, Flex, Heading, Text, Button, Input, Spinner, useToast } from '@chakra-ui/react';
+import { FiEdit2, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
 import { GiTooth } from 'react-icons/gi';
 import { useEffect, useState } from 'react';
 import { Badge } from '../components/common/Badge';
@@ -16,6 +16,7 @@ type ServiceApi = {
 };
 
 export const ServicesPage = () => {
+    const toast = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [categoryFilter, setCategoryFilter] = useState<string>('Tous');
     const [servicesData, setServicesData] = useState<ServiceApi[]>([]);
@@ -122,8 +123,22 @@ export const ServicesPage = () => {
             if (!response.ok) throw new Error('Failed to update service');
             await fetchServices();
             closeModal();
+            toast({
+                title: 'Succès',
+                description: 'Le service a été modifié avec succès',
+                status: 'success',
+                duration: 3000,
+                isClosable: true,
+            });
         } catch (error) {
             console.error('Error updating service:', error);
+            toast({
+                title: 'Erreur',
+                description: 'Échec de la modification du service',
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+            });
         } finally {
             setIsUpdating(false);
         }
@@ -476,51 +491,28 @@ export const ServicesPage = () => {
                                             </Badge>
                                         </Table.Cell>
                                         <Table.Cell py="1rem" px="1.25rem">
-                                            <Flex gap="0.5rem">
-                                                <Box
-                                                    as="button"
-                                                    bg="rgba(5, 199, 226, 0.1)"
-                                                    border="1px solid rgba(5, 199, 226, 0.2)"
-                                                    cursor="pointer"
-                                                    p="0.5rem"
-                                                    borderRadius="6px"
-                                                    transition="all 0.3s ease"
-                                                    color="accent"
-                                                    display="flex"
-                                                    alignItems="center"
-                                                    justifyContent="center"
-                                                    _hover={{ 
-                                                        bg: 'rgba(5, 199, 226, 0.2)',
-                                                        transform: 'translateY(-2px)',
-                                                        boxShadow: '0 2px 8px rgba(5, 199, 226, 0.3)'
-                                                    }}
-                                                    title="Modifier"
-                                                    onClick={() => openEditModal(service)}
-                                                >
-                                                    <Icon as={FiEdit2} boxSize="1.1rem" />
-                                                </Box>
-                                                <Box
-                                                    as="button"
-                                                    bg="rgba(220, 38, 38, 0.1)"
-                                                    border="1px solid rgba(220, 38, 38, 0.2)"
-                                                    cursor="pointer"
-                                                    p="0.5rem"
-                                                    borderRadius="6px"
-                                                    transition="all 0.3s ease"
-                                                    color="#dc2626"
-                                                    display="flex"
-                                                    alignItems="center"
-                                                    justifyContent="center"
-                                                    _hover={{ 
-                                                        bg: 'rgba(220, 38, 38, 0.2)',
-                                                        transform: 'translateY(-2px)',
-                                                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
-                                                    }}
-                                                    title="Supprimer"
-                                                >
-                                                    <Icon as={FiTrash2} boxSize="1.1rem" />
-                                                </Box>
-                                            </Flex>
+                                            <Box
+                                                as="button"
+                                                bg="rgba(5, 199, 226, 0.1)"
+                                                border="1px solid rgba(5, 199, 226, 0.2)"
+                                                cursor="pointer"
+                                                p="0.5rem"
+                                                borderRadius="6px"
+                                                transition="all 0.3s ease"
+                                                color="accent"
+                                                display="flex"
+                                                alignItems="center"
+                                                justifyContent="center"
+                                                _hover={{ 
+                                                    bg: 'rgba(5, 199, 226, 0.2)',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: '0 2px 8px rgba(5, 199, 226, 0.3)'
+                                                }}
+                                                title="Modifier"
+                                                onClick={() => openEditModal(service)}
+                                            >
+                                                <Icon as={FiEdit2} boxSize="1.1rem" />
+                                            </Box>
                                         </Table.Cell>
                                     </Table.Row>
                                 ))}
@@ -600,8 +592,24 @@ export const ServicesPage = () => {
                                 <option value="Inactif">Inactif</option>
                             </select>
                         </Box>
-                        <Flex justify="flex-end" gap="0.75rem" mt="0.5rem">
-                            <Button variant="outline" onClick={closeModal}>
+                        <Flex justify="flex-end" gap="1rem" mt="1.5rem">
+                            <Button 
+                                variant="outline" 
+                                onClick={closeModal}
+                                px="1.5rem"
+                                py="0.75rem"
+                                h="44px"
+                                fontSize="0.95rem"
+                                fontWeight="600"
+                                borderRadius="8px"
+                                border="2px solid"
+                                borderColor="rgba(10, 77, 104, 0.3)"
+                                color="primary"
+                                _hover={{
+                                    bg: "rgba(10, 77, 104, 0.05)",
+                                    borderColor: "primary",
+                                }}
+                            >
                                 Annuler
                             </Button>
                             <Button
@@ -609,6 +617,15 @@ export const ServicesPage = () => {
                                 color="white"
                                 onClick={handleUpdateService}
                                 loading={isUpdating}
+                                px="1.5rem"
+                                py="0.75rem"
+                                h="44px"
+                                fontSize="0.95rem"
+                                fontWeight="600"
+                                borderRadius="8px"
+                                _hover={{
+                                    bg: "rgba(10, 77, 104, 0.9)",
+                                }}
                             >
                                 Enregistrer
                             </Button>
