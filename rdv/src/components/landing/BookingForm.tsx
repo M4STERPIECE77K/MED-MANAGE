@@ -369,8 +369,8 @@ export const BookingForm = () => {
                         <option value="" disabled style={{ color: '#a0a0a0' }}>
                             Sélectionnez un service
                         </option>
-                        <option value="Consultation générale">Consultation générale</option>
-                        <option value="Détartrage">Détartrage</option>
+                        <option value="Consultation generale">Consultation generale</option>
+                        <option value="Detartrage">Detartrage</option>
                         <option value="Blanchiment">Blanchiment</option>
                         <option value="Implant dentaire">Implant dentaire</option>
                         <option value="Orthodontie">Orthodontie</option>

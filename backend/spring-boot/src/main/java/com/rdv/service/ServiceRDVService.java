@@ -28,4 +28,13 @@ public class ServiceRDVService {
     public ServiceRDV create(@NonNull ServiceRDV serviceRDV) {
         return serviceRepository.save(serviceRDV);
     }
+
+    @Transactional
+    public ServiceRDV updateFields(@NonNull UUID id, @NonNull Integer durationMinutes, @NonNull java.math.BigDecimal price, @NonNull String status) {
+        ServiceRDV service = findById(id);
+        service.setDurationMinutes(durationMinutes);
+        service.setPrice(price);
+        service.setStatus(status);
+        return serviceRepository.save(service);
+    }
 }

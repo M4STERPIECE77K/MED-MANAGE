@@ -3,7 +3,10 @@ package com.rdv.api.v1.controller;
 import com.rdv.entity.ServiceRDV;
 import com.rdv.service.ServiceRDVService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +14,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/services")
 @RequiredArgsConstructor
+@Validated
 public class ServiceRDVController {
     private final ServiceRDVService serviceRDVService;
 
@@ -28,4 +32,15 @@ public class ServiceRDVController {
     public ServiceRDV createService(@RequestBody ServiceRDV serviceRDV) {
         return serviceRDVService.create(serviceRDV);
     }
+
+    @PatchMapping("/{id}")
+    public ServiceRDV updateServiceFields(@PathVariable UUID id, @Valid @RequestBody ServiceUpdateRequest request) {
+        return serviceRDVService.updateFields(id, request.durationMinutes(), request.price(), request.status());
+    }
+
+    public record ServiceUpdateRequest(
+            @jakarta.validation.constraints.NotNull Integer durationMinutes,
+            @jakarta.validation.constraints.NotNull java.math.BigDecimal price,
+            @jakarta.validation.constraints.NotBlank String status
+    ) {}
 }
