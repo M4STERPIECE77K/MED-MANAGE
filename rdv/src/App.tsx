@@ -11,6 +11,7 @@ import { ServicesPage } from './pages/ServicesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { Toaster } from './components/ui/toaster';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Toaster />
     </Box>
   );
 }
