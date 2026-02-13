@@ -1,7 +1,52 @@
-import { Box, Grid, Heading, Text } from '@chakra-ui/react';
-import { services } from '../../data/sampleData';
+import { Box, Grid, Heading, Text, Spinner } from '@chakra-ui/react';
+import { useState, useEffect } from 'react';
+import type { Service } from '../../types';
+import { API_ENDPOINTS } from '../../config/api';
+
+const serviceIcons: Record<string, string> = {
+    'Consultation generale': '🔍',
+    'Detartrage': '✨',
+    'Blanchiment': '💎',
+    'Implant dentaire': '🦷',
+    'Orthodontie': '🎯',
+    'Urgence': '🚨',
+};
 
 export const ServicesSection = () => {
+    const [services, setServices] = useState<Service[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const response = await fetch(API_ENDPOINTS.services);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Ajouter les icônes aux services
+                    const servicesWithIcons = data.map((service: any) => ({
+                        ...service,
+                        icon: serviceIcons[service.name] || '🦷',
+                    }));
+                    setServices(servicesWithIcons);
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des services:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchServices();
+    }, []);
+
+    if (loading) {
+        return (
+            <Box as="section" py="5rem" px="2rem" maxW="1400px" mx="auto" id="services" display="flex" justifyContent="center">
+                <Spinner size="xl" color="primary" />
+            </Box>
+        );
+    }
+
     return (
         <Box as="section" py="5rem" px="2rem" maxW="1400px" mx="auto" id="services">
             <Heading

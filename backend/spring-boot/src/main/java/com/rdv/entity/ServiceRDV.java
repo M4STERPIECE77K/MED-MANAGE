@@ -32,7 +32,17 @@ public class ServiceRDV {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    @Column(nullable = false, length = 20)
+    private String status;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private ZonedDateTime createdAt;
+
+    @PrePersist
+    private void applyDefaults() {
+        if (status == null || status.isBlank()) {
+            status = "Actif";
+        }
+    }
 }

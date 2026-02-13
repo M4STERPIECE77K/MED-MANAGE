@@ -15,3 +15,4 @@ configMapGenerator:
     files:
       - sql/v1_schema.sql
       - sql/v2_table.sql
+      - sql/v3_services.sql
