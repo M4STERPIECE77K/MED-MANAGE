@@ -1,28 +1,40 @@
-import { Box, Table, Icon, Grid, Flex, Heading, Text, Button } from '@chakra-ui/react';
+import { Box, Table, Icon, Grid, Flex, Heading, Text, Button, Input, Spinner } from '@chakra-ui/react';
 import { FiEdit2, FiTrash2, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
 import { GiTooth } from 'react-icons/gi';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '../components/common/Badge';
 import { Modal } from '../components/common/Modal';
-import { services } from '../data/sampleData';
+import { API_ENDPOINTS } from '../config/api';
+
+type ServiceApi = {
+    id: string;
+    name: string;
+    description?: string | null;
+    durationMinutes: number;
+    price: number;
+    status?: 'Actif' | 'Inactif' | string | null;
+};
 
 export const ServicesPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [categoryFilter, setCategoryFilter] = useState<string>('Tous');
-    const [filteredServices, setFilteredServices] = useState(services);
-
-    // Calculate statistics
-    const totalServices = services.length;
-    const activeServices = services.filter(s => (s.status || 'Actif') === 'Actif').length;
-    const avgDuration = Math.round(
-        services.reduce((acc, s) => acc + parseInt(s.duration ?? '0', 10), 0) / services.length
-    );
-    
-    const prices = services.map(s => {
-        const priceStr = (s.price ?? '0').replace(/[^0-9]/g, '');
-        return parseInt(priceStr, 10) || 0;
+    const [servicesData, setServicesData] = useState<ServiceApi[]>([]);
+    const [filteredServices, setFilteredServices] = useState<ServiceApi[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedService, setSelectedService] = useState<ServiceApi | null>(null);
+    const [editForm, setEditForm] = useState({
+        durationMinutes: '',
+        price: '',
+        status: 'Actif',
     });
-    const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const totalServices = servicesData.length;
+    const activeServices = servicesData.filter(s => (s.status || 'Actif') === 'Actif').length;
+    const totalDuration = servicesData.reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
+    const avgDuration = totalServices > 0 ? Math.round(totalDuration / totalServices) : 0;
+    const totalPrice = servicesData.reduce((acc, s) => acc + (Number(s.price) || 0), 0);
+    const avgPrice = totalServices > 0 ? Math.round(totalPrice / totalServices) : 0;
     const formatPrice = (value: number) => new Intl.NumberFormat('fr-MG', {
         style: 'currency',
         currency: 'MGA',
@@ -31,15 +43,89 @@ export const ServicesPage = () => {
 
     const categories = ['Tous', 'Consultation', 'Nettoyage', 'Esthétique', 'Chirurgie'];
 
+    useEffect(() => {
+        fetchServices();
+    }, []);
+
+    useEffect(() => {
+        if (categoryFilter === 'Tous') {
+            setFilteredServices(servicesData);
+            return;
+        }
+
+        const filtered = servicesData.filter(s =>
+            s.name.toLowerCase().includes(categoryFilter.toLowerCase())
+        );
+        setFilteredServices(filtered.length > 0 ? filtered : servicesData);
+    }, [categoryFilter, servicesData]);
+
+    const fetchServices = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(API_ENDPOINTS.services);
+            if (!response.ok) throw new Error('Failed to fetch services');
+            const data = await response.json();
+            const mapped: ServiceApi[] = (Array.isArray(data) ? data : []).map((service: any) => ({
+                id: service.id,
+                name: service.name,
+                description: service.description ?? null,
+                durationMinutes: Number(service.durationMinutes ?? service.duration) || 0,
+                price: Number(service.price) || 0,
+                status: service.status ?? 'Actif',
+            }));
+            setServicesData(mapped);
+        } catch (error) {
+            console.error('Error fetching services:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleCategoryFilter = (category: string) => {
         setCategoryFilter(category);
-        if (category === 'Tous') {
-            setFilteredServices(services);
-        } else {
-            const filtered = services.filter(s => 
-                s.name.toLowerCase().includes(category.toLowerCase())
-            );
-            setFilteredServices(filtered.length > 0 ? filtered : services);
+    };
+
+    const openEditModal = (service: ServiceApi) => {
+        setSelectedService(service);
+        setEditForm({
+            durationMinutes: String(service.durationMinutes ?? ''),
+            price: String(service.price ?? ''),
+            status: service.status ?? 'Actif',
+        });
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedService(null);
+    };
+
+    const handleUpdateService = async () => {
+        if (!selectedService) return;
+
+        const durationMinutes = Number(editForm.durationMinutes);
+        const price = Number(editForm.price);
+        if (!durationMinutes || !price) return;
+
+        setIsUpdating(true);
+        try {
+            const response = await fetch(`${API_ENDPOINTS.services}/${selectedService.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    durationMinutes,
+                    price,
+                    status: editForm.status,
+                }),
+            });
+
+            if (!response.ok) throw new Error('Failed to update service');
+            await fetchServices();
+            closeModal();
+        } catch (error) {
+            console.error('Error updating service:', error);
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -194,8 +280,6 @@ export const ServicesPage = () => {
                     </Text>
                 </Box>
             </Grid>
-
-            {/* Services Table */}
             <Box
                 bg="white"
                 borderRadius="12px"
@@ -203,7 +287,6 @@ export const ServicesPage = () => {
                 boxShadow="0 2px 12px rgba(10, 77, 104, 0.08)"
                 border="1px solid rgba(10, 77, 104, 0.08)"
             >
-                {/* Header with Add Button */}
                 <Flex 
                     justify="space-between" 
                     align="center" 
@@ -230,30 +313,8 @@ export const ServicesPage = () => {
                             {filteredServices.length} service{filteredServices.length > 1 ? 's' : ''} disponible{filteredServices.length > 1 ? 's' : ''}
                         </Text>
                     </Box>
-
-                    <Button
-                        onClick={() => setIsModalOpen(true)}
-                        bg="primary"
-                        color="white"
-                        border="2px solid transparent"
-                        px="1.25rem"
-                        py="0.6rem"
-                        borderRadius="8px"
-                        cursor="pointer"
-                        fontWeight="600"
-                        fontSize="0.9rem"
-                        transition="all 0.3s ease"
-                        _hover={{
-                            bg: 'rgba(10, 77, 104, 0.9)',
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 12px rgba(10, 77, 104, 0.3)',
-                        }}
-                    >
-                        + Nouveau service
-                    </Button>
                 </Flex>
 
-                {/* Category Filter Pills */}
                 <Flex gap="0.75rem" mb="1.5rem" flexWrap="wrap">
                     {categories.map((category) => (
                         <Button
@@ -284,189 +345,275 @@ export const ServicesPage = () => {
                     overflowX="auto"
                     borderRadius="8px"
                     border="1px solid rgba(10, 77, 104, 0.1)"
+                    minH="200px"
+                    position="relative"
                 >
-                    <Table.Root variant="line" size="md">
-                        <Table.Header bg="rgba(10, 77, 104, 0.04)">
-                            <Table.Row>
-                                <Table.ColumnHeader
-                                    fontWeight="700"
-                                    fontSize="0.85rem"
-                                    color="primary"
-                                    textTransform="uppercase"
-                                    letterSpacing="0.5px"
-                                    py="1rem"
-                                    px="1.25rem"
-                                    minW="250px"
-                                >
-                                    Service
-                                </Table.ColumnHeader>
-                                <Table.ColumnHeader
-                                    fontWeight="700"
-                                    fontSize="0.85rem"
-                                    color="primary"
-                                    textTransform="uppercase"
-                                    letterSpacing="0.5px"
-                                    py="1rem"
-                                    px="1.25rem"
-                                >
-                                    Durée
-                                </Table.ColumnHeader>
-                                <Table.ColumnHeader
-                                    fontWeight="700"
-                                    fontSize="0.85rem"
-                                    color="primary"
-                                    textTransform="uppercase"
-                                    letterSpacing="0.5px"
-                                    py="1rem"
-                                    px="1.25rem"
-                                >
-                                    Prix
-                                </Table.ColumnHeader>
-                                <Table.ColumnHeader
-                                    fontWeight="700"
-                                    fontSize="0.85rem"
-                                    color="primary"
-                                    textTransform="uppercase"
-                                    letterSpacing="0.5px"
-                                    py="1rem"
-                                    px="1.25rem"
-                                >
-                                    Statut
-                                </Table.ColumnHeader>
-                                <Table.ColumnHeader
-                                    fontWeight="700"
-                                    fontSize="0.85rem"
-                                    color="primary"
-                                    textTransform="uppercase"
-                                    letterSpacing="0.5px"
-                                    py="1rem"
-                                    px="1.25rem"
-                                >
-                                    Actions
-                                </Table.ColumnHeader>
-                            </Table.Row>
-                        </Table.Header>
-                        <Table.Body>
-                            {filteredServices.map((service, index) => (
-                                <Table.Row
-                                    key={service.id}
-                                    _hover={{ 
-                                        bg: 'rgba(5, 199, 226, 0.04)',
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                    borderBottom={
-                                        index === filteredServices.length - 1 
-                                            ? 'none' 
-                                            : '1px solid rgba(10, 77, 104, 0.08)'
-                                    }
-                                >
-                                    <Table.Cell 
-                                        py="1rem" 
-                                        px="1.25rem"
-                                        fontWeight="600"
-                                        color="primary"
-                                        fontSize="0.95rem"
-                                    >
-                                        <Flex align="center" gap="0.75rem">
-                                            <Box
-                                                bg="rgba(5, 199, 226, 0.1)"
-                                                borderRadius="8px"
-                                                p="0.5rem"
-                                                fontSize="1.25rem"
-                                                color="accent"
-                                            >
-                                                <Icon as={GiTooth} />
-                                            </Box>
-                                            {service.name}
-                                        </Flex>
-                                    </Table.Cell>
-                                    <Table.Cell 
-                                        py="1rem" 
-                                        px="1.25rem"
-                                        color="rgba(10, 77, 104, 0.8)"
-                                        fontSize="0.9rem"
-                                    >
-                                        <Flex align="center" gap="0.5rem">
-                                            <Box fontSize="0.9rem" color="accent">
-                                                <Icon as={FiClock} />
-                                            </Box>
-                                            <Text fontWeight="500">{service.duration}</Text>
-                                        </Flex>
-                                    </Table.Cell>
-                                    <Table.Cell 
-                                        py="1rem" 
-                                        px="1.25rem"
-                                        color="primary"
-                                        fontSize="0.95rem"
+                    {isLoading ? (
+                        <Flex justify="center" align="center" py="5rem">
+                            <Spinner size="xl" color="primary" />
+                        </Flex>
+                    ) : (
+                        <Table.Root variant="line" size="md">
+                            <Table.Header bg="rgba(10, 77, 104, 0.04)">
+                                <Table.Row>
+                                    <Table.ColumnHeader
                                         fontWeight="700"
+                                        fontSize="0.85rem"
+                                        color="primary"
+                                        textTransform="uppercase"
+                                        letterSpacing="0.5px"
+                                        py="1rem"
+                                        px="1.25rem"
+                                        minW="250px"
                                     >
-                                        {formatPrice(prices[index] ?? 0)}
-                                    </Table.Cell>
-                                    <Table.Cell py="1rem" px="1.25rem">
-                                        <Badge status={service.status || 'Actif'}>
-                                            {service.status || 'Actif'}
-                                        </Badge>
-                                    </Table.Cell>
-                                    <Table.Cell py="1rem" px="1.25rem">
-                                        <Flex gap="0.5rem">
-                                            <Box
-                                                as="button"
-                                                bg="rgba(5, 199, 226, 0.1)"
-                                                border="1px solid rgba(5, 199, 226, 0.2)"
-                                                cursor="pointer"
-                                                p="0.5rem"
-                                                borderRadius="6px"
-                                                transition="all 0.3s ease"
-                                                color="accent"
-                                                display="flex"
-                                                alignItems="center"
-                                                justifyContent="center"
-                                                _hover={{ 
-                                                    bg: 'rgba(5, 199, 226, 0.2)',
-                                                    transform: 'translateY(-2px)',
-                                                    boxShadow: '0 2px 8px rgba(5, 199, 226, 0.3)'
-                                                }}
-                                                title="Modifier"
-                                            >
-                                                <Icon as={FiEdit2} boxSize="1.1rem" />
-                                            </Box>
-                                            <Box
-                                                as="button"
-                                                bg="rgba(220, 38, 38, 0.1)"
-                                                border="1px solid rgba(220, 38, 38, 0.2)"
-                                                cursor="pointer"
-                                                p="0.5rem"
-                                                borderRadius="6px"
-                                                transition="all 0.3s ease"
-                                                color="#dc2626"
-                                                display="flex"
-                                                alignItems="center"
-                                                justifyContent="center"
-                                                _hover={{ 
-                                                    bg: 'rgba(220, 38, 38, 0.2)',
-                                                    transform: 'translateY(-2px)',
-                                                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
-                                                }}
-                                                title="Supprimer"
-                                            >
-                                                <Icon as={FiTrash2} boxSize="1.1rem" />
-                                            </Box>
-                                        </Flex>
-                                    </Table.Cell>
+                                        Service
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader
+                                        fontWeight="700"
+                                        fontSize="0.85rem"
+                                        color="primary"
+                                        textTransform="uppercase"
+                                        letterSpacing="0.5px"
+                                        py="1rem"
+                                        px="1.25rem"
+                                    >
+                                        Durée
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader
+                                        fontWeight="700"
+                                        fontSize="0.85rem"
+                                        color="primary"
+                                        textTransform="uppercase"
+                                        letterSpacing="0.5px"
+                                        py="1rem"
+                                        px="1.25rem"
+                                    >
+                                        Prix
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader
+                                        fontWeight="700"
+                                        fontSize="0.85rem"
+                                        color="primary"
+                                        textTransform="uppercase"
+                                        letterSpacing="0.5px"
+                                        py="1rem"
+                                        px="1.25rem"
+                                    >
+                                        Statut
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader
+                                        fontWeight="700"
+                                        fontSize="0.85rem"
+                                        color="primary"
+                                        textTransform="uppercase"
+                                        letterSpacing="0.5px"
+                                        py="1rem"
+                                        px="1.25rem"
+                                    >
+                                        Actions
+                                    </Table.ColumnHeader>
                                 </Table.Row>
-                            ))}
-                        </Table.Body>
-                    </Table.Root>
+                            </Table.Header>
+                            <Table.Body>
+                                {filteredServices.map((service, index) => (
+                                    <Table.Row
+                                        key={service.id}
+                                        _hover={{ 
+                                            bg: 'rgba(5, 199, 226, 0.04)',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        borderBottom={
+                                            index === filteredServices.length - 1 
+                                                ? 'none' 
+                                                : '1px solid rgba(10, 77, 104, 0.08)'
+                                        }
+                                    >
+                                        <Table.Cell 
+                                            py="1rem" 
+                                            px="1.25rem"
+                                            fontWeight="600"
+                                            color="primary"
+                                            fontSize="0.95rem"
+                                        >
+                                            <Flex align="center" gap="0.75rem">
+                                                <Box
+                                                    bg="rgba(5, 199, 226, 0.1)"
+                                                    borderRadius="8px"
+                                                    p="0.5rem"
+                                                    fontSize="1.25rem"
+                                                    color="accent"
+                                                >
+                                                    <Icon as={GiTooth} />
+                                                </Box>
+                                                {service.name}
+                                            </Flex>
+                                        </Table.Cell>
+                                        <Table.Cell 
+                                            py="1rem" 
+                                            px="1.25rem"
+                                            color="rgba(10, 77, 104, 0.8)"
+                                            fontSize="0.9rem"
+                                        >
+                                            <Flex align="center" gap="0.5rem">
+                                                <Box fontSize="0.9rem" color="accent">
+                                                    <Icon as={FiClock} />
+                                                </Box>
+                                                <Text fontWeight="500">{service.durationMinutes} min</Text>
+                                            </Flex>
+                                        </Table.Cell>
+                                        <Table.Cell 
+                                            py="1rem" 
+                                            px="1.25rem"
+                                            color="primary"
+                                            fontSize="0.95rem"
+                                            fontWeight="700"
+                                        >
+                                            {formatPrice(service.price)}
+                                        </Table.Cell>
+                                        <Table.Cell py="1rem" px="1.25rem">
+                                            <Badge status={(service.status as any) || 'Actif'}>
+                                                {service.status || 'Actif'}
+                                            </Badge>
+                                        </Table.Cell>
+                                        <Table.Cell py="1rem" px="1.25rem">
+                                            <Flex gap="0.5rem">
+                                                <Box
+                                                    as="button"
+                                                    bg="rgba(5, 199, 226, 0.1)"
+                                                    border="1px solid rgba(5, 199, 226, 0.2)"
+                                                    cursor="pointer"
+                                                    p="0.5rem"
+                                                    borderRadius="6px"
+                                                    transition="all 0.3s ease"
+                                                    color="accent"
+                                                    display="flex"
+                                                    alignItems="center"
+                                                    justifyContent="center"
+                                                    _hover={{ 
+                                                        bg: 'rgba(5, 199, 226, 0.2)',
+                                                        transform: 'translateY(-2px)',
+                                                        boxShadow: '0 2px 8px rgba(5, 199, 226, 0.3)'
+                                                    }}
+                                                    title="Modifier"
+                                                    onClick={() => openEditModal(service)}
+                                                >
+                                                    <Icon as={FiEdit2} boxSize="1.1rem" />
+                                                </Box>
+                                                <Box
+                                                    as="button"
+                                                    bg="rgba(220, 38, 38, 0.1)"
+                                                    border="1px solid rgba(220, 38, 38, 0.2)"
+                                                    cursor="pointer"
+                                                    p="0.5rem"
+                                                    borderRadius="6px"
+                                                    transition="all 0.3s ease"
+                                                    color="#dc2626"
+                                                    display="flex"
+                                                    alignItems="center"
+                                                    justifyContent="center"
+                                                    _hover={{ 
+                                                        bg: 'rgba(220, 38, 38, 0.2)',
+                                                        transform: 'translateY(-2px)',
+                                                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
+                                                    }}
+                                                    title="Supprimer"
+                                                >
+                                                    <Icon as={FiTrash2} boxSize="1.1rem" />
+                                                </Box>
+                                            </Flex>
+                                        </Table.Cell>
+                                    </Table.Row>
+                                ))}
+                            </Table.Body>
+                        </Table.Root>
+                    )}
                 </Box>
             </Box>
 
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Nouveau service"
+                onClose={closeModal}
+                title="Modifier le service"
             >
                 <Box>
-                    <Text>Formulaire de création de service à implémenter</Text>
+                    <Flex direction="column" gap="1.25rem">
+                        <Box>
+                            <Text mb="0.5rem" fontWeight="600" color="primary" fontSize="0.9rem">Duree (minutes)</Text>
+                            <Input
+                                type="number"
+                                value={editForm.durationMinutes}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, durationMinutes: e.target.value }))}
+                                placeholder="Ex: 45"
+                                size="lg"
+                                px="1rem"
+                                py="0.75rem"
+                                h="48px"
+                                fontSize="1rem"
+                                borderRadius="8px"
+                                border="2px solid"
+                                borderColor="rgba(10, 77, 104, 0.2)"
+                                _focus={{
+                                    borderColor: "accent",
+                                    boxShadow: "0 0 0 1px var(--colors-accent)",
+                                }}
+                            />
+                        </Box>
+                        <Box>
+                            <Text mb="0.5rem" fontWeight="600" color="primary" fontSize="0.9rem">Prix (MGA)</Text>
+                            <Input
+                                type="number"
+                                value={editForm.price}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
+                                placeholder="Ex: 80000"
+                                size="lg"
+                                px="1rem"
+                                py="0.75rem"
+                                h="48px"
+                                fontSize="1rem"
+                                borderRadius="8px"
+                                border="2px solid"
+                                borderColor="rgba(10, 77, 104, 0.2)"
+                                _focus={{
+                                    borderColor: "accent",
+                                    boxShadow: "0 0 0 1px var(--colors-accent)",
+                                }}
+                            />
+                        </Box>
+                        <Box>
+                            <Text mb="0.5rem" fontWeight="600" color="primary" fontSize="0.9rem">Statut</Text>
+                            <select
+                                style={{
+                                    width: '100%',
+                                    height: '48px',
+                                    padding: '0 2.5rem 0 1rem',
+                                    fontSize: '1rem',
+                                    borderRadius: '8px',
+                                    border: '2px solid rgba(10, 77, 104, 0.2)',
+                                    outline: 'none',
+                                    backgroundColor: 'white',
+                                    cursor: 'pointer',
+                                }}
+                                value={editForm.status}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
+                            >
+                                <option value="Actif">Actif</option>
+                                <option value="Inactif">Inactif</option>
+                            </select>
+                        </Box>
+                        <Flex justify="flex-end" gap="0.75rem" mt="0.5rem">
+                            <Button variant="outline" onClick={closeModal}>
+                                Annuler
+                            </Button>
+                            <Button
+                                bg="primary"
+                                color="white"
+                                onClick={handleUpdateService}
+                                loading={isUpdating}
+                            >
+                                Enregistrer
+                            </Button>
+                        </Flex>
+                    </Flex>
                 </Box>
             </Modal>
         </Box>
