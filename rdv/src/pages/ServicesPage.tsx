@@ -66,7 +66,15 @@ export const ServicesPage = () => {
             const response = await fetch(API_ENDPOINTS.services);
             if (!response.ok) throw new Error('Failed to fetch services');
             const data = await response.json();
-            const mapped: ServiceApi[] = (Array.isArray(data) ? data : []).map((service: any) => ({
+            const mapped: ServiceApi[] = (Array.isArray(data) ? data : []).map((service: {
+                id: string;
+                name: string;
+                description?: string | null;
+                durationMinutes?: number;
+                duration?: number;
+                price: number;
+                status?: string | null;
+            }) => ({
                 id: service.id,
                 name: service.name,
                 description: service.description ?? null,
@@ -482,7 +490,7 @@ export const ServicesPage = () => {
                                             {formatPrice(service.price)}
                                         </Table.Cell>
                                         <Table.Cell py="1rem" px="1.25rem">
-                                            <Badge status={(service.status as any) || 'Actif'}>
+                                            <Badge status={(service.status as 'Actif' | 'Inactif') || 'Actif'}>
                                                 {service.status || 'Actif'}
                                             </Badge>
                                         </Table.Cell>
